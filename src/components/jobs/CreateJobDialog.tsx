@@ -22,14 +22,24 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
+import StageManager, { Stage } from "./StageManager";
 
 interface CreateJobDialogProps {
   onJobCreated?: () => void;
 }
 
+const DEFAULT_STAGES: Stage[] = [
+  { id: "applied", label: "Applied", color: "bg-blue-500" },
+  { id: "screening", label: "Screening", color: "bg-yellow-500" },
+  { id: "interview", label: "Interview", color: "bg-purple-500" },
+  { id: "offer", label: "Offer", color: "bg-green-500" },
+  { id: "rejected", label: "Rejected", color: "bg-red-500" },
+];
+
 const CreateJobDialog = ({ onJobCreated }: CreateJobDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [stages, setStages] = useState<Stage[]>(DEFAULT_STAGES);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -54,6 +64,7 @@ const CreateJobDialog = ({ onJobCreated }: CreateJobDialogProps) => {
       responsibilities: formData.get("responsibilities") as string,
       salary_range: formData.get("salary_range") as string,
       created_by: user.id,
+      stages: stages as any, // Cast to any to avoid type issues with JSONB
     });
 
     setLoading(false);
@@ -63,6 +74,7 @@ const CreateJobDialog = ({ onJobCreated }: CreateJobDialogProps) => {
     } else {
       toast.success("Job created successfully!");
       setOpen(false);
+      setStages(DEFAULT_STAGES); // Reset stages
       onJobCreated?.();
     }
   };
@@ -115,7 +127,7 @@ const CreateJobDialog = ({ onJobCreated }: CreateJobDialogProps) => {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="salary_range">Salary Range</Label>
-                <Input id="salary_range" name="salary_range" placeholder="e.g., $80k - $120k" />
+                <Input id="salary_range" name="salary_range" placeholder="e.g., ₹8L - ₹12L" />
               </div>
             </div>
             <div className="grid gap-2">
@@ -129,6 +141,10 @@ const CreateJobDialog = ({ onJobCreated }: CreateJobDialogProps) => {
             <div className="grid gap-2">
               <Label htmlFor="responsibilities">Responsibilities</Label>
               <Textarea id="responsibilities" name="responsibilities" rows={4} />
+            </div>
+
+            <div className="pt-4 border-t">
+              <StageManager stages={stages} onChange={setStages} />
             </div>
           </div>
           <DialogFooter>

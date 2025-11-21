@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Briefcase, MapPin, DollarSign, ArrowLeft, Users, Edit, Trash2, Share2 } from "lucide-react";
+import { Briefcase, MapPin, IndianRupee, ArrowLeft, Users, Edit, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +17,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import EditJobDialog from "@/components/jobs/EditJobDialog";
+import ShareJobDialog from "@/components/jobs/ShareJobDialog";
 
 interface Job {
   id: string;
@@ -32,8 +34,6 @@ interface Job {
   created_by: string;
   created_at: string;
 }
-
-import EditJobDialog from "@/components/jobs/EditJobDialog";
 
 const JobDetails = () => {
   const { jobId } = useParams();
@@ -107,12 +107,6 @@ const JobDetails = () => {
     }
   };
 
-  const handleShare = () => {
-    const url = `${window.location.origin}/apply/${jobId}`;
-    navigator.clipboard.writeText(url);
-    toast.success("Application link copied to clipboard!");
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -174,7 +168,7 @@ const JobDetails = () => {
               </div>
               {job.salary_range && (
                 <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" />
+                  <IndianRupee className="h-4 w-4" />
                   {job.salary_range}
                 </div>
               )}
@@ -193,10 +187,7 @@ const JobDetails = () => {
                 <Button variant="outline" size="sm" onClick={handleToggleStatus}>
                   {job.status === "active" ? "Close Job" : "Activate Job"}
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleShare}>
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share Application Link
-                </Button>
+                <ShareJobDialog jobTitle={job.title} jobId={job.id} />
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm">

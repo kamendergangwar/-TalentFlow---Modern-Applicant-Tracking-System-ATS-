@@ -20,6 +20,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import StageManager, { Stage } from "./StageManager";
 
 interface Job {
     id: string;
@@ -31,6 +32,7 @@ interface Job {
     requirements: string;
     responsibilities: string;
     salary_range: string;
+    stages?: Stage[];
 }
 
 interface EditJobDialogProps {
@@ -40,12 +42,22 @@ interface EditJobDialogProps {
     onJobUpdated: () => void;
 }
 
+const DEFAULT_STAGES: Stage[] = [
+    { id: "applied", label: "Applied", color: "bg-blue-500" },
+    { id: "screening", label: "Screening", color: "bg-yellow-500" },
+    { id: "interview", label: "Interview", color: "bg-purple-500" },
+    { id: "offer", label: "Offer", color: "bg-green-500" },
+    { id: "rejected", label: "Rejected", color: "bg-red-500" },
+];
+
 const EditJobDialog = ({ job, open, onOpenChange, onJobUpdated }: EditJobDialogProps) => {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<Job>(job);
+    const [stages, setStages] = useState<Stage[]>(job.stages || DEFAULT_STAGES);
 
     useEffect(() => {
         setFormData(job);
+        setStages(job.stages || DEFAULT_STAGES);
     }, [job]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -77,6 +89,7 @@ const EditJobDialog = ({ job, open, onOpenChange, onJobUpdated }: EditJobDialogP
                 requirements: formData.requirements,
                 responsibilities: formData.responsibilities,
                 salary_range: formData.salary_range,
+                stages: stages as any,
             })
             .eq("id", job.id);
 
@@ -162,7 +175,7 @@ const EditJobDialog = ({ job, open, onOpenChange, onJobUpdated }: EditJobDialogP
                                     name="salary_range"
                                     value={formData.salary_range || ""}
                                     onChange={handleInputChange}
-                                    placeholder="e.g., $80k - $120k"
+                                    placeholder="e.g., ₹8L - ₹12L"
                                 />
                             </div>
                         </div>
@@ -196,6 +209,10 @@ const EditJobDialog = ({ job, open, onOpenChange, onJobUpdated }: EditJobDialogP
                                 onChange={handleInputChange}
                                 rows={4}
                             />
+                        </div>
+
+                        <div className="pt-4 border-t">
+                            <StageManager stages={stages} onChange={setStages} />
                         </div>
                     </div>
                     <DialogFooter>

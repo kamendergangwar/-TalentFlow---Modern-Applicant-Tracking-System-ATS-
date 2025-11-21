@@ -20,7 +20,9 @@ import {
 } from "lucide-react";
 import InterviewScheduler from "@/components/interviews/InterviewScheduler";
 import ActivityTimeline from "@/components/candidates/ActivityTimeline";
+import Scorecard from "@/components/candidates/Scorecard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Stage } from "@/components/jobs/StageManager";
 
 interface Candidate {
   id: string;
@@ -39,10 +41,11 @@ interface Candidate {
     title: string;
     department: string;
     location: string;
+    stages: Stage[];
   };
 }
 
-const stages = [
+const DEFAULT_STAGES: Stage[] = [
   { id: "applied", label: "Applied", color: "bg-blue-500" },
   { id: "screening", label: "Screening", color: "bg-yellow-500" },
   { id: "interview", label: "Interview", color: "bg-purple-500" },
@@ -65,7 +68,7 @@ const CandidateDetail = () => {
   const fetchCandidate = async () => {
     const { data, error } = await supabase
       .from("candidates")
-      .select("*, jobs(title, department, location)")
+      .select("*, jobs(title, department, location, stages)")
       .eq("id", candidateId)
       .single();
 
@@ -75,7 +78,7 @@ const CandidateDetail = () => {
       return;
     }
 
-    setCandidate(data);
+    setCandidate(data as any);
     setNotes(data.notes || "");
     setRating(data.rating || 0);
     setLoading(false);
@@ -142,8 +145,22 @@ const CandidateDetail = () => {
     }
   };
 
+  const getJobStages = () => {
+    return candidate?.jobs?.stages || DEFAULT_STAGES;
+  };
+
   const getCurrentStage = () => {
+    const stages = getJobStages();
     return stages.find(s => s.id === candidate?.current_stage) || stages[0];
+  };
+
+  // Simulated Match Score (In a real app, this would be calculated based on skills/keywords)
+  const getMatchScore = () => {
+    if (!candidate) return 0;
+    // Deterministic pseudo-random score based on name length for demo
+    const baseScore = 70;
+    const variance = (candidate.full_name.length * 3) % 25;
+    return Math.min(98, baseScore + variance);
   };
 
   if (loading) {
@@ -163,6 +180,8 @@ const CandidateDetail = () => {
   }
 
   const currentStage = getCurrentStage();
+  const matchScore = getMatchScore();
+  const jobStages = getJobStages();
 
   return (
     <div className="min-h-screen bg-background">
@@ -177,7 +196,21 @@ const CandidateDetail = () => {
               <h1 className="text-2xl font-bold">{candidate.full_name}</h1>
               <p className="text-muted-foreground">{candidate.jobs?.title || "No position"}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col items-end">
+                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Match Score</span>
+                <div className="flex items-center gap-1">
+                  <div className={`text-xl font-bold ${matchScore >= 80 ? 'text-green-500' : matchScore >= 60 ? 'text-yellow-500' : 'text-red-500'}`}>
+                    {matchScore}%
+                  </div>
+                  <div className="h-2 w-16 bg-secondary rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${matchScore >= 80 ? 'bg-green-500' : matchScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                      style={{ width: `${matchScore}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
               <div className={`px-3 py-1 rounded-full ${currentStage.color} text-white text-sm`}>
                 {currentStage.label}
               </div>
@@ -190,9 +223,10 @@ const CandidateDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="resume">Resume</TabsTrigger>
+                <TabsTrigger value="scorecard">Scorecard</TabsTrigger>
                 <TabsTrigger value="notes">Notes</TabsTrigger>
               </TabsList>
 
@@ -305,6 +339,10 @@ const CandidateDetail = () => {
                 </Card>
               </TabsContent>
 
+              <TabsContent value="scorecard" className="mt-6">
+                <Scorecard candidateId={candidate.id} />
+              </TabsContent>
+
               <TabsContent value="notes" className="mt-6">
                 <Card>
                   <CardHeader>
@@ -351,7 +389,7 @@ const CandidateDetail = () => {
                 <CardTitle>Change Stage</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {stages.map((stage) => (
+                {jobStages.map((stage) => (
                   <Button
                     key={stage.id}
                     variant={candidate.current_stage === stage.id ? "default" : "outline"}
