@@ -1,0 +1,29 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#gradient)"/>
+  
+  <!-- Briefcase Icon -->
+  <g transform="translate(256, 256)">
+    <!-- Briefcase body -->
+    <rect x="-100" y="-40" width="200" height="120" rx="12" fill="white" opacity="0.95"/>
+    
+    <!-- Briefcase handle -->
+    <path d="M -60 -40 L -60 -60 Q -60 -80 -40 -80 L 40 -80 Q 60 -80 60 -60 L 60 -40" 
+          stroke="white" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.95"/>
+    
+    <!-- Briefcase lock/clasp -->
+    <rect x="-15" y="-40" width="30" height="20" rx="4" fill="white" opacity="0.95"/>
+    
+    <!-- Checkmark integrated -->
+    <path d="M -30 10 L -10 30 L 40 -20" 
+          stroke="#4A90E2" stroke-width="16" fill="none" 
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
