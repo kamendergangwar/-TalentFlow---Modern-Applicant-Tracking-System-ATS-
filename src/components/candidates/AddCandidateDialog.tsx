@@ -43,7 +43,7 @@ const AddCandidateDialog = ({ open, onOpenChange, onSuccess }: AddCandidateDialo
     const [formData, setFormData] = useState({
         full_name: "",
         email: "",
-        phone: "",
+        phone: "+91 ",
         job_id: "",
         linkedin_url: "",
         portfolio_url: "",
@@ -121,7 +121,7 @@ const AddCandidateDialog = ({ open, onOpenChange, onSuccess }: AddCandidateDialo
         setFormData({
             full_name: "",
             email: "",
-            phone: "",
+            phone: "+91 ",
             job_id: "",
             linkedin_url: "",
             portfolio_url: "",
@@ -278,7 +278,7 @@ const AddCandidateDialog = ({ open, onOpenChange, onSuccess }: AddCandidateDialo
                                     type="tel"
                                     value={formData.phone}
                                     onChange={handleInputChange}
-                                    placeholder="+1 (555) 123-4567"
+                                    placeholder="+91 98765 43210"
                                     required
                                 />
                             </div>
