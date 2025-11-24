@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Storage Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+    <h1>Supabase Storage Test</h1>
+    <div id="results"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://lksawoewvvaqvfdznspj.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxrc2F3b2V3dnZhcXZmZHpuc3BqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3MTk5MTUsImV4cCI6MjA3OTI5NTkxNX0.nCfWb7RH6iSwVkfgpyhg7x9nKK9vf89zi3GBMtFlrJo';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function testStorage() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>Testing storage...</p>';
+
+            try {
+                // Test 1: List buckets
+                const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+
+                if (bucketsError) {
+                    results.innerHTML += `<p style="color: red;">❌ Error listing buckets: ${bucketsError.message}</p>`;
+                } else {
+                    results.innerHTML += `<p style="color: green;">✅ Buckets found: ${buckets.length}</p>`;
+                    results.innerHTML += `<pre>${JSON.stringify(buckets, null, 2)}</pre>`;
+
+                    // Check if candidate-files bucket exists
+                    const candidateBucket = buckets.find(b => b.id === 'candidate-files');
+                    if (candidateBucket) {
+                        results.innerHTML += `<p style="color: green;">✅ candidate-files bucket exists!</p>`;
+                        results.innerHTML += `<p>Public: ${candidateBucket.public}</p>`;
+                    } else {
+                        results.innerHTML += `<p style="color: red;">❌ candidate-files bucket NOT found!</p>`;
+                        results.innerHTML += `<p><strong>Action needed:</strong> Create bucket named 'candidate-files' in Supabase Dashboard</p>`;
+                    }
+                }
+
+                // Test 2: Try to list files in candidate-files bucket
+                const { data: files, error: filesError } = await supabase.storage
+                    .from('candidate-files')
+                    .list('resumes');
+
+                if (filesError) {
+                    results.innerHTML += `<p style="color: red;">❌ Error accessing candidate-files: ${filesError.message}</p>`;
+
+                    if (filesError.message.includes('Bucket not found')) {
+                        results.innerHTML += `<p><strong>Solution:</strong> Create the bucket in Supabase Dashboard → Storage</p>`;
+                    } else if (filesError.message.includes('policy')) {
+                        results.innerHTML += `<p><strong>Solution:</strong> Add storage policies for SELECT operation</p>`;
+                    }
+                } else {
+                    results.innerHTML += `<p style="color: green;">✅ Can access candidate-files bucket!</p>`;
+                    results.innerHTML += `<p>Files found: ${files.length}</p>`;
+                }
+
+                // Test 3: Try to upload a test file
+                const testFile = new Blob(['test content'], { type: 'text/plain' });
+                const testFileName = `test_${Date.now()}.txt`;
+
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('candidate-files')
+                    .upload(`test/${testFileName}`, testFile);
+
+                if (uploadError) {
+                    results.innerHTML += `<p style="color: red;">❌ Upload test failed: ${uploadError.message}</p>`;
+
+                    if (uploadError.message.includes('policy')) {
+                        results.innerHTML += `<p><strong>Solution:</strong> Add storage policy for INSERT operation</p>`;
+                    }
+                } else {
+                    results.innerHTML += `<p style="color: green;">✅ Upload test successful!</p>`;
+                    results.innerHTML += `<p>File uploaded to: ${uploadData.path}</p>`;
+                }
+
+            } catch (error) {
+                results.innerHTML += `<p style="color: red;">❌ Unexpected error: ${error.message}</p>`;
+            }
+        }
+
+        // Run test on page load
+        testStorage();
+    </script>
+</body>
+
+</html>

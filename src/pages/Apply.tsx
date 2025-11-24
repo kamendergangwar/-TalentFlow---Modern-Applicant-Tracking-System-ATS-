@@ -58,19 +58,25 @@ const Apply = () => {
     if (selectedFile) {
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const filePath = `resumes/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('resumes')
+        .from('candidate-files')
         .upload(filePath, selectedFile);
 
       if (uploadError) {
+        console.error("Resume upload error:", uploadError);
         toast.error("Failed to upload resume");
         setSubmitting(false);
         return;
       }
 
-      resumeUrl = filePath;
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('candidate-files')
+        .getPublicUrl(filePath);
+
+      resumeUrl = urlData.publicUrl;
     }
 
     const { error } = await supabase.from("candidates").insert({
@@ -227,10 +233,10 @@ const Apply = () => {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="cover_letter">Cover Letter *</Label>
-                  <Textarea 
-                    id="cover_letter" 
-                    name="cover_letter" 
-                    required 
+                  <Textarea
+                    id="cover_letter"
+                    name="cover_letter"
+                    required
                     rows={6}
                     placeholder="Tell us why you're interested in this position..."
                   />

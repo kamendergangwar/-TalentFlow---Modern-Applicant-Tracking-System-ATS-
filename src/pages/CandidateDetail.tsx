@@ -68,7 +68,7 @@ const CandidateDetail = () => {
   const fetchCandidate = async () => {
     const { data, error } = await supabase
       .from("candidates")
-      .select("*, jobs(title, department, location, stages)")
+      .select("*, jobs(title, department, location)")
       .eq("id", candidateId)
       .single();
 
