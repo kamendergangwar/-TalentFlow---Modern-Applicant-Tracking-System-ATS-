@@ -61,6 +61,11 @@ const JobDetails = () => {
 
       const { data: { user } } = await supabase.auth.getUser();
       setIsOwner(user?.id === data.created_by);
+    } else if (error) {
+      console.error("Failed to load job details:", {
+        jobId,
+        error,
+      });
     }
     setLoading(false);
   };

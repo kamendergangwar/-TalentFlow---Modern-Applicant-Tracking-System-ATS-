@@ -22,9 +22,8 @@ interface ShareJobDialogProps {
 const ShareJobDialog = ({ jobTitle, companyName = "TalentFlow", jobId }: ShareJobDialogProps) => {
     const [copied, setCopied] = useState(false);
 
-    // In a real app, this would be the public URL of the job
-    const jobUrl = `${window.location.origin}/jobs/${jobId}`;
-    const shareText = `Check out this ${jobTitle} position at ${companyName}: ${jobUrl}`;
+    const jobUrl = `${window.location.origin}/apply/${jobId}`;
+    const shareText = `Apply for the ${jobTitle} position at ${companyName}: ${jobUrl}`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(jobUrl);
