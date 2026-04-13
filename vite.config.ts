@@ -4,10 +4,11 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 const repoBase = "/-TalentFlow---Modern-Applicant-Tracking-System-ATS-/";
+const appBasePath = process.env.VITE_APP_BASE_PATH || "/";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: mode === "production" ? repoBase : "/",
+  base: mode === "production" ? appBasePath : "/",
   server: {
     host: "::",
     port: 8080,

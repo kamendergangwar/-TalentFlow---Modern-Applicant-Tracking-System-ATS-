@@ -32,6 +32,8 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          VITE_APP_BASE_PATH: /-TalentFlow---Modern-Applicant-Tracking-System-ATS-/
         run: npm run build
 
       - name: Add SPA Fallback
