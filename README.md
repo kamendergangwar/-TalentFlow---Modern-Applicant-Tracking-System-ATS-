@@ -85,7 +85,7 @@ Upon logging in, the user is greeted by the **Dashboard**, which provides a high
    Create a `.env` file with your Supabase credentials:
    ```env
    VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
    ```
 
 4. **Run the development server**

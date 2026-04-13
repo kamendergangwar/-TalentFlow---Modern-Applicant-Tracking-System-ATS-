@@ -3,8 +3,11 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
+const repoBase = "/-TalentFlow---Modern-Applicant-Tracking-System-ATS-/";
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: mode === "production" ? repoBase : "/",
   server: {
     host: "::",
     port: 8080,

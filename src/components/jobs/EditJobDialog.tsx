@@ -50,6 +50,14 @@ const DEFAULT_STAGES: Stage[] = [
     { id: "rejected", label: "Rejected", color: "bg-red-500" },
 ];
 
+const getJobMutationErrorMessage = (message: string) => {
+    if (message.includes("stages")) {
+        return "The jobs table is missing the stages column. Run the latest Supabase migration and try again.";
+    }
+
+    return message;
+};
+
 const EditJobDialog = ({ job, open, onOpenChange, onJobUpdated }: EditJobDialogProps) => {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<Job>(job);
@@ -96,8 +104,8 @@ const EditJobDialog = ({ job, open, onOpenChange, onJobUpdated }: EditJobDialogP
         setLoading(false);
 
         if (error) {
-            toast.error("Failed to update job");
-            console.error(error);
+            console.error("Failed to update job:", error);
+            toast.error(getJobMutationErrorMessage(error.message));
         } else {
             toast.success("Job updated successfully!");
             onOpenChange(false);

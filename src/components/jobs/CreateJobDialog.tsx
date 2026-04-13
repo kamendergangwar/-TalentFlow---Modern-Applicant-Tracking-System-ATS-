@@ -36,6 +36,18 @@ const DEFAULT_STAGES: Stage[] = [
   { id: "rejected", label: "Rejected", color: "bg-red-500" },
 ];
 
+const getJobMutationErrorMessage = (message: string) => {
+  if (message.includes("stages")) {
+    return "The jobs table is missing the stages column. Run the latest Supabase migration and try again.";
+  }
+
+  if (message.includes("jobs_created_by_fkey") || message.toLowerCase().includes("foreign key")) {
+    return "Your user profile record is missing in Supabase. The app tried to recreate it, but it still needs attention.";
+  }
+
+  return message;
+};
+
 const CreateJobDialog = ({ onJobCreated }: CreateJobDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -50,6 +62,21 @@ const CreateJobDialog = ({ onJobCreated }: CreateJobDialogProps) => {
 
     if (!user) {
       toast.error("You must be logged in to create a job");
+      setLoading(false);
+      return;
+    }
+
+    const { error: profileError } = await supabase.from("profiles").upsert({
+      id: user.id,
+      email: user.email ?? null,
+      full_name: typeof user.user_metadata?.full_name === "string"
+        ? user.user_metadata.full_name
+        : null,
+    });
+
+    if (profileError) {
+      console.error("Failed to upsert profile before job creation:", profileError);
+      toast.error(profileError.message);
       setLoading(false);
       return;
     }
@@ -70,7 +97,8 @@ const CreateJobDialog = ({ onJobCreated }: CreateJobDialogProps) => {
     setLoading(false);
 
     if (error) {
-      toast.error("Failed to create job");
+      console.error("Failed to create job:", error);
+      toast.error(getJobMutationErrorMessage(error.message));
     } else {
       toast.success("Job created successfully!");
       setOpen(false);

@@ -220,6 +220,7 @@ export type Database = {
           requirements: string | null
           responsibilities: string | null
           salary_range: string | null
+          stages: Json
           status: string | null
           title: string
           updated_at: string | null
@@ -235,6 +236,7 @@ export type Database = {
           requirements?: string | null
           responsibilities?: string | null
           salary_range?: string | null
+          stages?: Json
           status?: string | null
           title: string
           updated_at?: string | null
@@ -250,6 +252,7 @@ export type Database = {
           requirements?: string | null
           responsibilities?: string | null
           salary_range?: string | null
+          stages?: Json
           status?: string | null
           title?: string
           updated_at?: string | null
