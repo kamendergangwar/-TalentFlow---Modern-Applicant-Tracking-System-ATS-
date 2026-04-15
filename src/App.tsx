@@ -11,7 +11,6 @@ import Auth from "./pages/Auth";
 import Analytics from "./pages/Analytics";
 import EmailTemplates from "./pages/EmailTemplates";
 import NotFound from "./pages/NotFound";
-import AnimatedBackground from "./components/AnimatedBackground";
 
 const queryClient = new QueryClient();
 
@@ -22,7 +21,6 @@ const App = () => (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <TooltipProvider>
         <div className="app-shell">
-          <AnimatedBackground />
           <div className="app-content">
             <Toaster />
             <Sonner />
