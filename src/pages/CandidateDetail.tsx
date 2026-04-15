@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -16,7 +17,8 @@ import {
   Star,
   Briefcase,
   Calendar,
-  Download
+  Download,
+  Upload
 } from "lucide-react";
 import InterviewScheduler from "@/components/interviews/InterviewScheduler";
 import ActivityTimeline from "@/components/candidates/ActivityTimeline";
@@ -53,6 +55,54 @@ const DEFAULT_STAGES: Stage[] = [
   { id: "rejected", label: "Rejected", color: "bg-red-500" },
 ];
 
+const RESUME_BUCKET = "candidate-files";
+const MAX_RESUME_SIZE = 10 * 1024 * 1024;
+const ALLOWED_RESUME_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+
+const getResumeStoragePath = (resumeUrl: string | null | undefined) => {
+  if (!resumeUrl) {
+    return null;
+  }
+
+  if (!resumeUrl.startsWith("http")) {
+    return resumeUrl.replace(/^\/+/, "");
+  }
+
+  try {
+    const url = new URL(resumeUrl);
+    const markers = [
+      `/storage/v1/object/public/${RESUME_BUCKET}/`,
+      `/storage/v1/object/sign/${RESUME_BUCKET}/`,
+      `/storage/v1/object/authenticated/${RESUME_BUCKET}/`,
+    ];
+
+    for (const marker of markers) {
+      const index = url.pathname.indexOf(marker);
+      if (index !== -1) {
+        return decodeURIComponent(url.pathname.slice(index + marker.length));
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+};
+
+const getResumeExtension = (value: string | null | undefined) => {
+  if (!value) {
+    return null;
+  }
+
+  const sanitized = value.split("?")[0].split("#")[0];
+  const extension = sanitized.split(".").pop();
+  return extension ? extension.toLowerCase() : null;
+};
+
 const CandidateDetail = () => {
   const { candidateId } = useParams();
   const navigate = useNavigate();
@@ -60,10 +110,51 @@ const CandidateDetail = () => {
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState("");
   const [rating, setRating] = useState(0);
+  const [resolvedResumeUrl, setResolvedResumeUrl] = useState<string | null>(null);
+  const [resumeAccessError, setResumeAccessError] = useState<string | null>(null);
+  const [downloadingResume, setDownloadingResume] = useState(false);
+  const [uploadingResume, setUploadingResume] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     fetchCandidate();
   }, [candidateId]);
+
+  useEffect(() => {
+    const resolveResumeUrl = async () => {
+      if (!candidate?.resume_url) {
+        setResolvedResumeUrl(null);
+        setResumeAccessError(null);
+        return;
+      }
+
+      const storagePath = getResumeStoragePath(candidate.resume_url);
+
+      if (!storagePath) {
+        setResolvedResumeUrl(candidate.resume_url);
+        setResumeAccessError(null);
+        return;
+      }
+
+      const { data, error } = await supabase.storage
+        .from(RESUME_BUCKET)
+        .createSignedUrl(storagePath, 60 * 60);
+
+      if (error) {
+        console.error("Failed to create signed resume URL:", error);
+        setResolvedResumeUrl(candidate.resume_url);
+        setResumeAccessError(
+          "Resume file exists, but this app may not have permission to preview it. Check the Supabase storage bucket and SELECT policy."
+        );
+        return;
+      }
+
+      setResolvedResumeUrl(data.signedUrl);
+      setResumeAccessError(null);
+    };
+
+    void resolveResumeUrl();
+  }, [candidate?.resume_url]);
 
   const fetchCandidate = async () => {
     const { data, error } = await supabase
@@ -163,6 +254,122 @@ const CandidateDetail = () => {
     return Math.min(98, baseScore + variance);
   };
 
+  const handleDownloadResume = async () => {
+    if (!candidate?.resume_url) {
+      return;
+    }
+
+    const storagePath = getResumeStoragePath(candidate.resume_url);
+
+    if (!storagePath) {
+      window.open(resolvedResumeUrl ?? candidate.resume_url, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    setDownloadingResume(true);
+
+    const { data, error } = await supabase.storage
+      .from(RESUME_BUCKET)
+      .download(storagePath);
+
+    setDownloadingResume(false);
+
+    if (error || !data) {
+      console.error("Resume download error:", error);
+      toast.error("Unable to download the resume. Check Supabase storage bucket access.");
+      return;
+    }
+
+    const downloadUrl = URL.createObjectURL(data);
+    const link = document.createElement("a");
+    const fileName = storagePath.split("/").pop() || "resume";
+
+    link.href = downloadUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+  };
+
+  const handleResumePickerClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file || !candidateId || !candidate) {
+      return;
+    }
+
+    if (!ALLOWED_RESUME_TYPES.includes(file.type)) {
+      toast.error("Please upload a PDF or Word document.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_RESUME_SIZE) {
+      toast.error("Resume file must be smaller than 10MB.");
+      event.target.value = "";
+      return;
+    }
+
+    setUploadingResume(true);
+
+    const fileExt = file.name.split(".").pop()?.toLowerCase() || "pdf";
+    const safeName = candidate.full_name.trim().replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_-]/g, "");
+    const fileName = `${Date.now()}_${safeName || "candidate"}.${fileExt}`;
+    const filePath = `resumes/${fileName}`;
+    const previousStoragePath = getResumeStoragePath(candidate.resume_url);
+
+    const { error: uploadError } = await supabase.storage
+      .from(RESUME_BUCKET)
+      .upload(filePath, file, {
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error("Resume upload error:", uploadError);
+      toast.error("Failed to upload resume.");
+      setUploadingResume(false);
+      event.target.value = "";
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from(RESUME_BUCKET)
+      .getPublicUrl(filePath);
+
+    const { error: updateError } = await supabase
+      .from("candidates")
+      .update({ resume_url: urlData.publicUrl })
+      .eq("id", candidateId);
+
+    if (updateError) {
+      console.error("Candidate resume update error:", updateError);
+      toast.error("Resume uploaded, but the candidate record could not be updated.");
+      setUploadingResume(false);
+      event.target.value = "";
+      return;
+    }
+
+    if (previousStoragePath && previousStoragePath !== filePath) {
+      const { error: removeError } = await supabase.storage
+        .from(RESUME_BUCKET)
+        .remove([previousStoragePath]);
+
+      if (removeError) {
+        console.warn("Previous resume could not be removed:", removeError);
+      }
+    }
+
+    toast.success(candidate.resume_url ? "Resume replaced successfully." : "Resume uploaded successfully.");
+    event.target.value = "";
+    setUploadingResume(false);
+    fetchCandidate();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -182,6 +389,9 @@ const CandidateDetail = () => {
   const currentStage = getCurrentStage();
   const matchScore = getMatchScore();
   const jobStages = getJobStages();
+  const resumeExtension = getResumeExtension(candidate.resume_url);
+  const isPdfResume = resumeExtension === "pdf";
+  const canPreviewResume = Boolean(resolvedResumeUrl && isPdfResume);
 
   return (
     <div className="min-h-screen">
@@ -300,34 +510,74 @@ const CandidateDetail = () => {
               <TabsContent value="resume" className="mt-6">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle>Resume Preview</CardTitle>
+                    <div>
+                      <CardTitle>Resume Preview</CardTitle>
+                      <CardDescription>
+                        Upload a fresh file if the old resume is missing or outdated.
+                      </CardDescription>
+                    </div>
                     <div className="flex gap-2">
+                      <Input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        className="hidden"
+                        onChange={handleResumeUpload}
+                      />
+                      <Button variant="default" size="sm" onClick={handleResumePickerClick} disabled={uploadingResume}>
+                        <Upload className="h-4 w-4 mr-2" />
+                        {uploadingResume
+                          ? "Uploading..."
+                          : candidate.resume_url
+                            ? "Replace Resume"
+                            : "Upload Resume"}
+                      </Button>
                       {candidate.resume_url && (
                         <>
                           <Button variant="outline" size="sm" asChild>
-                            <a href={candidate.resume_url} target="_blank" rel="noopener noreferrer">
+                            <a
+                              href={resolvedResumeUrl ?? candidate.resume_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
                               <FileText className="h-4 w-4 mr-2" />
                               Open
                             </a>
                           </Button>
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={candidate.resume_url} target="_blank" rel="noopener noreferrer" download>
-                              <Download className="h-4 w-4 mr-2" />
-                              Download
-                            </a>
+                          <Button variant="outline" size="sm" onClick={handleDownloadResume} disabled={downloadingResume}>
+                            <Download className="h-4 w-4 mr-2" />
+                            {downloadingResume ? "Downloading..." : "Download"}
                           </Button>
-                        </>
+                        </> 
                       )}
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {candidate.resume_url ? (
+                    {resumeAccessError && (
+                      <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                        {resumeAccessError}
+                      </div>
+                    )}
+                    {!candidate.resume_url && (
+                      <div className="mb-4 rounded-md border border-dashed border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+                        No resume is attached yet. Upload a PDF or Word document to store it against this candidate.
+                      </div>
+                    )}
+                    {canPreviewResume ? (
                       <div className="h-[600px] w-full border rounded-md overflow-hidden bg-muted/10">
                         <iframe
-                          src={`https://docs.google.com/gview?url=${encodeURIComponent(candidate.resume_url)}&embedded=true`}
+                          src={resolvedResumeUrl ?? candidate.resume_url}
                           className="w-full h-full"
                           title="Resume Preview"
                         />
+                      </div>
+                    ) : candidate.resume_url ? (
+                      <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                        <FileText className="h-12 w-12 mb-4 opacity-30" />
+                        <p className="font-medium text-foreground">Inline preview is available for PDF resumes.</p>
+                        <p className="mt-2 max-w-md text-sm">
+                          This resume looks like a Word document or a protected file URL. Use Open or Download above.
+                        </p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">

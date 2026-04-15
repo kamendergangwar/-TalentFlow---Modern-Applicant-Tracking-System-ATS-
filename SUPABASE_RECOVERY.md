@@ -112,5 +112,4 @@ After the new credentials are in place, verify these flows:
 
 - `supabase/config.toml` and `.env` should point to the same Supabase project.
 - `supabase_complete_schema.sql` does not match the latest schema represented by the migrations.
-- The code references `candidate-files`, while one older migration creates a `resumes` bucket.
 - The UI invokes `send-custom-email`, but no matching edge function exists in this repo.
