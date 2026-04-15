@@ -28,10 +28,10 @@ const getAuthErrorMessage = (error: unknown, fallbackMessage: string) =>
   error instanceof Error && error.message ? error.message : fallbackMessage;
 
 const authInputClassName =
-  "border-slate-300/90 bg-white/95 text-slate-950 placeholder:text-slate-500 shadow-sm shadow-slate-200/60 focus-visible:ring-cyan-500 focus-visible:ring-offset-white dark:border-white/[0.12] dark:bg-white/[0.08] dark:text-white dark:placeholder:text-slate-400 dark:shadow-none dark:focus-visible:ring-cyan-400 dark:focus-visible:ring-offset-slate-950";
+  "border-slate-300/90 bg-white/95 text-slate-950 placeholder:text-slate-500 shadow-sm shadow-slate-200/60 focus-visible:ring-cyan-500 focus-visible:ring-offset-white dark:border-white/[0.14] dark:bg-[rgba(15,23,42,0.86)] dark:text-white dark:placeholder:text-slate-400 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] dark:focus-visible:ring-cyan-400 dark:focus-visible:ring-offset-slate-950";
 
 const authTabTriggerClassName =
-  "text-slate-600 dark:text-slate-300 data-[state=active]:bg-white data-[state=active]:text-slate-950 data-[state=active]:shadow-sm dark:data-[state=active]:bg-white/[0.12] dark:data-[state=active]:text-white";
+  "text-slate-600 dark:text-slate-400 data-[state=active]:bg-white data-[state=active]:text-slate-950 data-[state=active]:shadow-sm dark:data-[state=active]:bg-[rgba(96,165,250,0.14)] dark:data-[state=active]:text-white dark:data-[state=active]:shadow-[0_8px_24px_rgba(8,15,30,0.28)]";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -238,7 +238,12 @@ const Auth = () => {
       </div>
 
       <div className="relative grid min-h-screen lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="relative min-h-[320px] overflow-hidden border-b border-slate-200/80 lg:min-h-screen lg:border-b-0 lg:border-r dark:border-white/10">
+        <div className="pointer-events-none absolute inset-y-0 left-[55%] z-10 hidden -translate-x-1/2 lg:block">
+          <div className="h-full w-px bg-gradient-to-b from-transparent via-slate-300/70 to-transparent dark:via-white/[0.08]" />
+          <div className="absolute inset-y-[18%] left-1/2 w-20 -translate-x-1/2 bg-gradient-to-r from-transparent via-cyan-300/20 to-transparent blur-2xl dark:via-cyan-400/[0.12]" />
+        </div>
+
+        <section className="relative min-h-[320px] overflow-hidden border-b border-slate-200/80 lg:min-h-screen lg:border-b-0 dark:border-white/10">
           <Suspense
             fallback={
               <div className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(94,184,255,0.18),_transparent_36%),linear-gradient(180deg,_#eff7ff_0%,_#edf5ff_100%)] dark:bg-[radial-gradient(circle_at_top,_rgba(94,184,255,0.25),_transparent_40%),linear-gradient(180deg,_#061121_0%,_#040817_100%)]" />
@@ -293,12 +298,23 @@ const Auth = () => {
           </div>
         </section>
 
-        <section className="flex items-center justify-center bg-transparent px-4 py-8 sm:px-6 lg:px-10 lg:py-12 dark:bg-[linear-gradient(180deg,rgba(6,11,26,0.08),rgba(6,11,26,0.32))]">
-          <Card className="w-full max-w-md border-slate-200/80 bg-white/80 text-slate-950 shadow-[0_30px_80px_rgba(148,163,184,0.24)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/[0.72] dark:text-white dark:shadow-[0_30px_80px_rgba(2,6,23,0.72)]">
-            <CardHeader className="space-y-5 text-left">
+        <section className="relative flex items-center justify-center bg-transparent px-4 py-8 sm:px-6 lg:px-10 lg:py-12 dark:bg-[linear-gradient(180deg,rgba(6,11,26,0.08),rgba(6,11,26,0.32))]">
+          <div className="pointer-events-none absolute inset-0 hidden dark:block">
+            <div className="absolute right-[12%] top-[20%] h-64 w-64 rounded-full bg-cyan-400/[0.08] blur-3xl" />
+            <div className="absolute bottom-[16%] right-[18%] h-72 w-72 rounded-full bg-indigo-500/[0.08] blur-3xl" />
+          </div>
+
+          <Card className="relative w-full max-w-[430px] overflow-hidden border-slate-200/80 bg-white/80 text-slate-950 shadow-[0_30px_80px_rgba(148,163,184,0.24)] backdrop-blur-2xl dark:border-white/[0.1] dark:bg-[linear-gradient(180deg,rgba(9,16,32,0.92),rgba(8,13,27,0.84))] dark:text-white dark:shadow-[0_36px_90px_rgba(2,6,23,0.78)]">
+            <div className="pointer-events-none absolute inset-0 hidden dark:block">
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.24] to-transparent" />
+              <div className="absolute left-[-12%] top-[-10%] h-40 w-40 rounded-full bg-cyan-300/[0.12] blur-3xl" />
+              <div className="absolute bottom-[-18%] right-[-8%] h-48 w-48 rounded-full bg-indigo-500/[0.14] blur-3xl" />
+            </div>
+
+            <CardHeader className="relative z-10 space-y-5 text-left">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-2xl bg-cyan-100 p-3 dark:bg-white/[0.12]">
+                  <div className="rounded-2xl bg-cyan-100 p-3 dark:bg-cyan-400/[0.12] dark:ring-1 dark:ring-cyan-300/[0.12]">
                     <Briefcase className="h-6 w-6 text-cyan-700 dark:text-cyan-200" />
                   </div>
                   <div>
@@ -315,7 +331,7 @@ const Auth = () => {
               </div>
 
               {authMode === "tabs" ? (
-                <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/90 p-4 text-sm text-slate-700 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-200">
+                <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/90 p-4 text-sm text-slate-700 dark:border-white/[0.08] dark:bg-[rgba(255,255,255,0.04)] dark:text-slate-200">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-cyan-600 dark:text-cyan-200" />
                     Secure email authentication with Supabase
@@ -328,7 +344,7 @@ const Auth = () => {
               ) : null}
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="relative z-10">
               {authMode === "recovery" ? (
                 <form onSubmit={handlePasswordUpdate} className="space-y-4">
                   <div className="space-y-2">
@@ -357,7 +373,7 @@ const Auth = () => {
                       className={authInputClassName}
                     />
                   </div>
-                  <Button type="submit" className="w-full bg-cyan-500 text-white hover:bg-cyan-600 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300" disabled={loading}>
+                  <Button type="submit" className="w-full bg-cyan-500 text-white hover:bg-cyan-600 dark:bg-[linear-gradient(90deg,#67e8f9_0%,#38bdf8_55%,#22c55e_100%)] dark:text-slate-950 dark:hover:brightness-105" disabled={loading}>
                     {loading ? "Updating password..." : "Update Password"}
                   </Button>
                 </form>
@@ -378,7 +394,7 @@ const Auth = () => {
                       className={authInputClassName}
                     />
                   </div>
-                  <Button type="submit" className="w-full bg-cyan-500 text-white hover:bg-cyan-600 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300" disabled={loading}>
+                  <Button type="submit" className="w-full bg-cyan-500 text-white hover:bg-cyan-600 dark:bg-[linear-gradient(90deg,#67e8f9_0%,#38bdf8_55%,#22c55e_100%)] dark:text-slate-950 dark:hover:brightness-105" disabled={loading}>
                     {loading ? "Sending reset link..." : "Send Reset Link"}
                   </Button>
                   <Button
@@ -392,7 +408,7 @@ const Auth = () => {
                 </form>
               ) : (
                 <Tabs defaultValue="signin">
-                  <TabsList className="grid w-full grid-cols-2 border border-slate-200 bg-slate-100/90 dark:border-white/10 dark:bg-white/[0.06]">
+                  <TabsList className="grid w-full grid-cols-2 border border-slate-200 bg-slate-100/90 dark:border-white/[0.08] dark:bg-[rgba(255,255,255,0.04)]">
                     <TabsTrigger value="signin" className={authTabTriggerClassName}>Sign In</TabsTrigger>
                     <TabsTrigger value="signup" className={authTabTriggerClassName}>Sign Up</TabsTrigger>
                   </TabsList>
@@ -432,7 +448,7 @@ const Auth = () => {
                       </div>
                       <Button
                         type="submit"
-                        className="w-full bg-cyan-500 text-white hover:bg-cyan-600 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+                        className="w-full bg-cyan-500 text-white hover:bg-cyan-600 dark:bg-[linear-gradient(90deg,#67e8f9_0%,#38bdf8_55%,#22c55e_100%)] dark:text-slate-950 dark:hover:brightness-105"
                         disabled={loading}
                       >
                         {loading ? "Signing in..." : "Sign In"}
@@ -492,7 +508,7 @@ const Auth = () => {
                       </div>
                       <Button
                         type="submit"
-                        className="w-full bg-cyan-500 text-white hover:bg-cyan-600 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300"
+                        className="w-full bg-cyan-500 text-white hover:bg-cyan-600 dark:bg-[linear-gradient(90deg,#67e8f9_0%,#38bdf8_55%,#22c55e_100%)] dark:text-slate-950 dark:hover:brightness-105"
                         disabled={loading}
                       >
                         {loading ? "Creating account..." : "Create Account"}
