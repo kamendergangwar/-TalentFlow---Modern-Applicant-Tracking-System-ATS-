@@ -107,7 +107,7 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="relative">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 border-t-primary"></div>
           <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-primary animate-pulse" />
@@ -117,7 +117,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
+    <div className="min-h-screen">
       {/* Enhanced Header with Gradient */}
       <header className="border-b bg-card/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-5">

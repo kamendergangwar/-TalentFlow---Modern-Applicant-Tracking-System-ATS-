@@ -123,7 +123,7 @@ const Apply = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 px-4">
+    <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         <Card>
           <CardHeader>

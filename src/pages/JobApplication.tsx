@@ -118,7 +118,7 @@ const JobApplication = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary mx-auto"></div>
                     <p className="text-muted-foreground mt-4">Loading job details...</p>
@@ -129,7 +129,7 @@ const JobApplication = () => {
 
     if (submitted) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center p-4">
+            <div className="min-h-screen flex items-center justify-center p-4">
                 <Card className="max-w-2xl w-full text-center shadow-2xl border-0 bg-card/80 backdrop-blur-xl">
                     <CardContent className="pt-12 pb-12">
                         <div className="mb-6 relative">
@@ -171,7 +171,7 @@ const JobApplication = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
+        <div className="min-h-screen">
             {/* Header */}
             <header className="bg-gradient-to-r from-primary to-accent py-8 px-4">
                 <div className="container mx-auto">

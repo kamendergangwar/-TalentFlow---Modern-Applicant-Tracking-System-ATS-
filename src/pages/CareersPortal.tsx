@@ -93,7 +93,7 @@ const CareersPortal = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
+        <div className="min-h-screen">
             {/* Hero Section */}
             <header className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-accent py-20 px-4">
                 <div className="absolute inset-0 bg-grid-white/10"></div>
