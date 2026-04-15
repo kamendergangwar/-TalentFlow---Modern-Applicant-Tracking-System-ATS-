@@ -140,15 +140,6 @@ All colors MUST be HSL.
   z-index: 1;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .background-glow,
-  .background-panel,
-  .background-grid,
-  .background-beam {
-    animation: none;
-  }
-}
-
 /* React Quill Styling */
 .ql-container {
   font-family: inherit;
