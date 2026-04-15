@@ -11,6 +11,18 @@ import { Briefcase } from "lucide-react";
 
 type AuthMode = "tabs" | "forgot-password" | "recovery";
 
+const getSiteBaseUrl = () => {
+  const configuredSiteUrl = import.meta.env.VITE_SITE_URL?.trim();
+  const siteUrl = configuredSiteUrl ? new URL(configuredSiteUrl) : new URL(window.location.origin);
+
+  return new URL(import.meta.env.BASE_URL, siteUrl);
+};
+
+const getAppUrl = (path = "") => new URL(path, getSiteBaseUrl()).toString();
+
+const getAuthErrorMessage = (error: unknown, fallbackMessage: string) =>
+  error instanceof Error && error.message ? error.message : fallbackMessage;
+
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -18,15 +30,21 @@ const Auth = () => {
   const [signInEmail, setSignInEmail] = useState("");
   const [forgotEmail, setForgotEmail] = useState("");
 
-  const authRedirectUrl = useMemo(
-    () => new URL("auth", new URL(import.meta.env.BASE_URL, window.location.origin)).toString(),
-    []
-  );
+  const authRedirectUrl = useMemo(() => getAppUrl("auth"), []);
+  const homeRedirectUrl = useMemo(() => getAppUrl(), []);
 
   useEffect(() => {
-    const recoveryType = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("type");
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const searchParams = new URLSearchParams(window.location.search);
+    const recoveryType = searchParams.get("type") ?? hashParams.get("type");
+    const hasRecoveryToken =
+      searchParams.has("code") ||
+      searchParams.has("token") ||
+      searchParams.has("token_hash") ||
+      hashParams.has("access_token") ||
+      hashParams.has("refresh_token");
 
-    if (recoveryType === "recovery") {
+    if (recoveryType === "recovery" || hasRecoveryToken) {
       setAuthMode("recovery");
     }
 
@@ -46,28 +64,32 @@ const Auth = () => {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
+    const email = (formData.get("email") as string).trim();
     const password = formData.get("password") as string;
-    const fullName = formData.get("fullName") as string;
+    const fullName = (formData.get("fullName") as string).trim();
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+          emailRedirectTo: homeRedirectUrl,
         },
-        emailRedirectTo: `${window.location.origin}/`,
-      },
-    });
+      });
 
-    setLoading(false);
+      if (error) {
+        throw error;
+      }
 
-    if (error) {
-      toast.error(error.message);
-    } else {
       toast.success("Account created successfully! Redirecting...");
       navigate("/");
+    } catch (error) {
+      toast.error(getAuthErrorMessage(error, "Unable to create your account right now."));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -76,21 +98,25 @@ const Auth = () => {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
+    const email = (formData.get("email") as string).trim();
     const password = formData.get("password") as string;
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    setLoading(false);
+      if (error) {
+        throw error;
+      }
 
-    if (error) {
-      toast.error(error.message);
-    } else {
       toast.success("Signed in successfully!");
       navigate("/");
+    } catch (error) {
+      toast.error(getAuthErrorMessage(error, "Unable to sign in right now."));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -99,21 +125,29 @@ const Auth = () => {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
+    const email = ((formData.get("email") as string) || forgotEmail).trim();
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: authRedirectUrl,
-    });
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: authRedirectUrl,
+      });
 
-    setLoading(false);
+      if (error) {
+        throw error;
+      }
 
-    if (error) {
-      toast.error(error.message);
-      return;
+      setForgotEmail(email);
+      toast.success("Password reset link sent. Check your email.");
+    } catch (error) {
+      toast.error(
+        getAuthErrorMessage(
+          error,
+          "Unable to send the reset link. Check the Supabase site URL and redirect URL settings."
+        )
+      );
+    } finally {
+      setLoading(false);
     }
-
-    setForgotEmail(email);
-    toast.success("Password reset link sent. Check your email.");
   };
 
   const handlePasswordUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -135,20 +169,23 @@ const Auth = () => {
 
     setLoading(true);
 
-    const { error } = await supabase.auth.updateUser({
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password,
+      });
 
-    setLoading(false);
+      if (error) {
+        throw error;
+      }
 
-    if (error) {
-      toast.error(error.message);
-      return;
+      toast.success("Password updated successfully.");
+      setAuthMode("tabs");
+      navigate("/");
+    } catch (error) {
+      toast.error(getAuthErrorMessage(error, "Unable to update your password right now."));
+    } finally {
+      setLoading(false);
     }
-
-    toast.success("Password updated successfully.");
-    setAuthMode("tabs");
-    navigate("/");
   };
 
   return (
@@ -205,7 +242,8 @@ const Auth = () => {
                   name="email"
                   type="email"
                   placeholder="you@company.com"
-                  defaultValue={forgotEmail}
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
                   required
                 />
               </div>
